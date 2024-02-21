@@ -7,8 +7,8 @@ import math
 import subprocess
 import multiprocessing
 import pdb
-
-
+from argparse import ArgumentParser
+from tqdm import tqdm
 
 def dump_testfile(task, index, tmp_dir):
     filename = os.path.join(tmp_dir.name, "testfile_%d.txt" % index)
@@ -42,18 +42,36 @@ def single_process(index, task, gpu, split):
 
     print(("任务%d处理完毕！" % (index)))
 
+def default_args():
+    parser = ArgumentParser(
+        description='Run Detector on TAO')
+    parser.add_argument('split', type=str, help='[/train/val/test]')
+    parser.add_argument('--out_dir', type=str, help='path to output dectection dir')
+    parser.add_argument('--fps', type=int, help='fps to run detector at', default=1)
+
+    args = parser.parse_args()
+    return args
 
 if "__main__" == __name__:
-    import sys
-    split = sys.argv[1]
-    print(split)
+    args = default_args()
 
     gpu_list = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
     # gpu_list = [0,0,1,1]
+    ###
+    # process arguments
+    ###
+    split = args.split
     file = "tools/multi_process_inference/inference.py"
-    img_txt = f'./data/tao/{split}_img_list.txt'
-    out_dir = f'./results/'
+    
+    fps_suffix = "" if args.fps == 1 else "_{}fps".format(args.fps)
+    img_txt = f'./data/tao/{split}_img_list{fps_suffix}.txt'
+    
+    out_dir = args.out_dir
     batch_size = 1
+
+    # create output dir
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
 
     # 解析dir
     img_list = parse_textfile(img_txt)
@@ -65,11 +83,14 @@ if "__main__" == __name__:
 
     # 创建进程
     processes=list()
-    for idx, (task, gpu) in enumerate(zip(tasks, gpu_list)):
+    print("Collect process...")
+    for idx, (task, gpu) in tqdm(enumerate(zip(tasks, gpu_list))):
         processes.append(multiprocessing.Process(target=single_process,args=(idx, task, gpu, split)))
 
-    for process in processes:
+    print("Running detector...")
+    for process in tqdm(processes):
         process.start()
 
-    for process in processes:
+    print("Merge results...")
+    for process in tqdm(processes):
         process.join()

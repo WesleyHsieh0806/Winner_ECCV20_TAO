@@ -65,10 +65,10 @@ def multiclass_nms(multi_bboxes,
 
     return bboxes, labels
 
-tao_gt_labels = []
-with open('./data/tao/tao_gt_labels.txt') as fp:
-    for line in fp.readlines():
-        tao_gt_labels.append(int(line.strip() ) )
+# tao_gt_labels = []
+# with open('./data/tao/tao_gt_labels.txt') as fp:
+#     for line in fp.readlines():
+#         tao_gt_labels.append(int(line.strip() ) )
 
 
 def multiclass_nms_tao(multi_bboxes,

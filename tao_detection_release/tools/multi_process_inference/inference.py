@@ -234,6 +234,7 @@ def main():
     fp16_cfg = cfg.get('fp16', None)
     if fp16_cfg is not None:
         wrap_fp16_model(model)
+    print("load model from {}...".format(args.checkpoint))
     checkpoint = load_checkpoint(model, args.checkpoint, map_location='cpu')
 
     model = reweight_cls(model, args.tau).cuda()
